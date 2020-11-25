@@ -22,10 +22,12 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.JList;
+import javax.swing.ListSelectionModel;
 import javax.swing.TransferHandler;
 import static javax.swing.TransferHandler.MOVE;
 
@@ -42,9 +44,8 @@ public class DndTransferHandler extends TransferHandler {
 
     private final JList<String> dndList;
     private final DefaultListModel<String> strings;
-    private int index;
-    private boolean beforeIndex = false; // Start with `false` therefore if it is removed from or added to the list it still works
-    private MainFrame mainFrame;
+    private final MainFrame mainFrame;
+    private final ListSelectionModel selection;
 
     /**
      * Create a new drag&drop transfer handler.
@@ -54,9 +55,13 @@ public class DndTransferHandler extends TransferHandler {
      * @param mainFrame
      */
     public DndTransferHandler(JList<String> dndList, DefaultListModel<String> strings, MainFrame mainFrame) {
+        if (dndList.getSelectionMode() == ListSelectionModel.MULTIPLE_INTERVAL_SELECTION) {
+            throw new IllegalArgumentException("Multiple interval selection is not supported, please use single or single interval selection.");
+        }
         this.dndList = dndList;
         this.strings = strings;
         this.mainFrame = mainFrame;
+        selection = dndList.getSelectionModel();
     }
 
     @Override
@@ -66,19 +71,8 @@ public class DndTransferHandler extends TransferHandler {
 
     @Override
     public Transferable createTransferable(JComponent comp) {
-        index = dndList.getSelectedIndex();
+        selection.getSelectedIndices();
         return new StringSelection(dndList.getSelectedValue());
-    }
-
-    @Override
-    public void exportDone(JComponent comp, Transferable trans, int action) {
-        if (action == MOVE) {
-            if (beforeIndex) {
-                strings.remove(index + 1);
-            } else {
-                strings.remove(index);
-            }
-        }
     }
 
     @Override
@@ -89,10 +83,27 @@ public class DndTransferHandler extends TransferHandler {
     @Override
     public boolean importData(TransferHandler.TransferSupport support) {
         try {
-            String s = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+            // Assume a MOVE operation if the flavor is string
+            support.getTransferable().getTransferData(DataFlavor.stringFlavor);  // raise an exception if the flavor is not supported
             JList.DropLocation dl = (JList.DropLocation) support.getDropLocation();
-            strings.add(dl.getIndex(), s);
-            beforeIndex = dl.getIndex() < index;
+            int[] selectedIndeces = selection.getSelectedIndices();
+            int selectedIndecesLength = selectedIndeces.length;
+            int dropLocationIndex = dl.getIndex();
+            if (dropLocationIndex >= selectedIndeces[0] && dropLocationIndex <= selectedIndeces[selectedIndeces.length - 1]) {
+                return false;
+            }
+            List<String> selectedValues = new ArrayList<>(selectedIndeces.length);
+            for (int i : selectedIndeces) {
+                selectedValues.add(strings.get(i));
+            }
+            strings.removeRange(selectedIndeces[0], selectedIndeces[selectedIndecesLength - 1]);
+            if (dropLocationIndex > selectedIndeces[0]) {
+                strings.addAll(dropLocationIndex - selectedIndecesLength, selectedValues);
+                selection.setSelectionInterval(dropLocationIndex - selectedIndecesLength, dropLocationIndex - 1);
+            } else {
+                strings.addAll(dropLocationIndex, selectedValues);
+                selection.setSelectionInterval(dropLocationIndex, dropLocationIndex + selectedIndecesLength - 1);
+            }
             return true;
         } catch (UnsupportedFlavorException ex0) {
             try {
@@ -104,7 +115,6 @@ public class DndTransferHandler extends TransferHandler {
         } catch (IOException ex2) {
             java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex2);
         }
-
         return false;
     }
 }

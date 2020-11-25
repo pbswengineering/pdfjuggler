@@ -125,8 +125,8 @@ public class MainFrame extends JFrame {
         public ImageIcon getThumbnail() {
             int w = thumbnail.getWidth();
             int h = thumbnail.getHeight();
-            int newW = 0;
-            int newH = 0;
+            int newW;
+            int newH;
             if (h > w) {
                 newH = thumbHeight;
                 newW = w * thumbHeight / h;
@@ -558,7 +558,7 @@ public class MainFrame extends JFrame {
         jToolBar1.add(btRemoveSelectedPages);
 
         pageList.setModel(new DefaultListModel<String>());
-        pageList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        pageList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         pageList.setDragEnabled(true);
         pageList.setDropMode(javax.swing.DropMode.INSERT);
         pageList.setLayoutOrientation(javax.swing.JList.HORIZONTAL_WRAP);
