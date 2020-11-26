@@ -1,7 +1,7 @@
 # Create the Microsoft Windows installation package
 # and the default self-contained Jar package
 
-$Version = "1.0"
+$Version = "1.1"
 
 Remove-Item -Recurse -Force .\package
 mvn clean

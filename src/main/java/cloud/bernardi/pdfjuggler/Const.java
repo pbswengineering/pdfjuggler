@@ -31,7 +31,7 @@ public class Const {
     /**
      * Version of the application.
      */
-    public static final String VERSION = "1.0";
+    public static final String VERSION = "1.1";
 
     /**
      * Copyright information.
