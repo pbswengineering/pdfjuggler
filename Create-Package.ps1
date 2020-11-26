@@ -1,7 +1,6 @@
 # Create the Microsoft Windows installation package
 # and the default self-contained Jar package
 
-# Change it!
 $Version = "1.0"
 
 Remove-Item -Recurse -Force .\package
@@ -21,7 +20,9 @@ jpackage `
     --license-file LICENSE `
     --vendor "Paolo Bernardi" `
     --win-menu `
-    --win-per-user-install
+    --win-shortcut `
+    --win-per-user-install `
+    --win-dir-chooser
 Copy-Item ".\target\pdfjuggler-${Version}-jar-with-dependencies.jar" .\package
 Rename-Item ".\package\pdfjuggler-${Version}-jar-with-dependencies.jar" "pdfjuggler-${Version}.jar"
 Rename-Item ".\package\PDF Juggler-${Version}.msi" "pdfjuggler-${Version}.msi"
